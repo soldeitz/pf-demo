@@ -27,15 +27,6 @@ let initialApproxPos = ApproximatedPosition(position: Point(x: WIDTH / 3, y: HEI
 let initialActualPos = Point(x: WIDTH / 3, y: HEIGHT / 2)
 
 struct ContentView: View {
-    
-    @State var numParticles = initialNumParticles
-    @State var maxParticleVel = initialMaxParticleVel
-    @State var defaultPosStd = initialDefaultPosStd
-    @State var randResPercentage = initialRandResPercentage
-    @State var randResInterval = initialRandResInterval
-    @State var apprxRadiusPercentage = initialApprxRadiusPercentage
-    @State var timerInterval = initialTimerInterval
-    
     @State var pf = ParticleFilter(
         numParticles: initialNumParticles,
         wall: initialWall,
@@ -46,74 +37,133 @@ struct ContentView: View {
         apprxRadiusPercentage: initialApprxRadiusPercentage)
     @State var approxPos = initialApproxPos
     @State var actualPos = initialActualPos
-    
-    @State var timer = Timer.scheduledTimer(withTimeInterval: initialTimerInterval, repeats: true, block: {_ in })
-    let floatFormatter = NumberFormatter()
-    
-    init() {
-        self.floatFormatter.usesSignificantDigits = true
-    }
-
+    @State var toggleTimer = true
     
     var body: some View {
         return HStack {
-            VStack {
+            FormView(pf: $pf, actualPos: $actualPos, approxPos: $approxPos, toggleTimer: $toggleTimer)
+            PFView(pf: $pf, approxPos: $approxPos, actualPos: $actualPos, toggleTimer: $toggleTimer)
+        }
+    }
+}
+
+struct FormView: View {
+    
+    @Binding var pf: ParticleFilter
+    @Binding var approxPos: ApproximatedPosition
+    @Binding var actualPos: Point
+    @Binding var toggleTimer: Bool
+    
+    @State var numParticles = initialNumParticles
+    @State var maxParticleVel = initialMaxParticleVel
+    @State var defaultPosStd = initialDefaultPosStd
+    @State var randResPercentage = initialRandResPercentage
+    @State var randResInterval = initialRandResInterval
+    @State var apprxRadiusPercentage = initialApprxRadiusPercentage
+    @State var timerInterval = initialTimerInterval
+    
+    @State var timer = Timer.scheduledTimer(withTimeInterval: initialTimerInterval, repeats: true, block: {_ in })
+
+    let floatFormatter = NumberFormatter()
+    
+    init(pf: Binding<ParticleFilter>, actualPos: Binding<Point>, approxPos: Binding<ApproximatedPosition>, toggleTimer: Binding<Bool>) {
+        self._pf = pf
+        self._actualPos = actualPos
+        self._approxPos = approxPos
+        self._toggleTimer = toggleTimer
+        
+        floatFormatter.usesSignificantDigits = true
+    }
+
+    func updateParticleFilter() {
+        self.approxPos = self.pf.predictPosition(self.actualPos)
+    }
+    
+    var body: some View {
+        return VStack {
+            Group {
                 Text("Timer interval:")
                     .font(Font.title2)
                 TextField("", value: $timerInterval, formatter: floatFormatter)
+                    .keyboardType(.numberPad)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .font(Font.title2)
                     .padding(.leading, 10)
                     .onSubmit {
                         self.timer.invalidate()
                         self.timer = Timer.scheduledTimer(withTimeInterval: timerInterval, repeats: true) { _ in
-                            self.approxPos = self.pf.predictPosition(self.actualPos)
+                            updateParticleFilter()
                         }
                         self.timer.fire()
                     }
+            }
+            Group {
                 Text("Number of particles:")
                     .font(Font.title2)
                 TextField("", value: $numParticles, formatter: NumberFormatter())
+                    .keyboardType(.numberPad)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .font(Font.title2)
                     .padding(.leading, 10)
                     .onSubmit {
                         self.pf.changeNumParticles(numParticles: self.numParticles, arPosition: self.approxPos.position, arPosStd: self.defaultPosStd)
                     }
+            }
+            Group {
                 Text("Maximum particle velocity:")
                     .font(Font.title2)
                 TextField("", value: $maxParticleVel, formatter: floatFormatter)
+                    .keyboardType(.numberPad)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .font(Font.title2)
                     .padding(.leading, 10)
                     .onSubmit {
                         self.pf.maxParticleVelocity = self.maxParticleVel
                     }
+            }
+            Group {
                 Text("Random resample interval:")
                     .font(Font.title2)
                 TextField("", value: $randResInterval, formatter: floatFormatter)
+                    .keyboardType(.numberPad)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .font(Font.title2)
                     .padding(.leading, 10)
                     .onSubmit {
                         self.pf.randResampleInterval = self.randResInterval
                     }
+            }
+            Group {
                 Text("Random resample percentage:")
                     .font(Font.title2)
                 TextField("", value: $randResPercentage, formatter: floatFormatter)
+                    .keyboardType(.numberPad)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .font(Font.title2)
                     .padding(.leading, 10)
                     .onSubmit {
                         self.pf.randResamplePercentage = self.randResPercentage
                     }
-                
             }
-            PFView(pf: $pf, approxPos: $approxPos, actualPos: $actualPos)
+            Toggle(isOn: $toggleTimer) {
+                Text("Toggle Timer").font(Font.title2)
+            }
+                .onChange(of: toggleTimer) { value in
+                    if (value) {
+                        self.timer.invalidate()
+                        self.timer = Timer.scheduledTimer(withTimeInterval: timerInterval, repeats: true) { _ in
+                            updateParticleFilter()
+                        }
+                    }
+                    else {
+                        self.timer.invalidate()
+                    }
+                }
+                .padding()
         }.onAppear {
             self.timer.invalidate()
             self.timer = Timer.scheduledTimer(withTimeInterval: timerInterval, repeats: true) { _ in
-                self.approxPos = self.pf.predictPosition(self.actualPos)
+                updateParticleFilter()
             }
         }
     }
@@ -123,28 +173,55 @@ struct PFView: View {
     @Binding var pf: ParticleFilter
     @Binding var approxPos: ApproximatedPosition
     @Binding var actualPos: Point
+    
+    @Binding var toggleTimer: Bool
 
     var body: some View {
         ZStack(alignment: .topLeading) {
+            // Particles of the PF
             ForEach(pf.particles, id: \.id) { particle in
                 Circle()
                     .frame(width: 4, height: 4, alignment: .center)
                     .offset(x: particle.p.x, y: particle.p.y)
             }
+            // Particle representing the calculated approximate position
             Circle()
                 .fill(.blue)
                 .frame(width: 10, height: 10, alignment: .center)
                 .offset(x: approxPos.position.x - 5, y: approxPos.position.y - 5)
+            // Approximation radius
             Circle()
                 .stroke(.blue)
                 .frame(width: approxPos.approximationRadius * 2, height: approxPos.approximationRadius * 2, alignment: .topLeading)
                 .offset(x: (approxPos.position.x - approxPos.approximationRadius), y: (approxPos.position.y - approxPos.approximationRadius))
+            // Wall
             Path { path in
                 path.move(to: CGPoint(x: pf.wall.from.x, y: pf.wall.from.y))
                 path.addLine(to: CGPoint(x: pf.wall.to.x, y: pf.wall.to.y))
             }
                 .strokedPath(StrokeStyle(lineWidth: 5, lineCap: .square, lineJoin: .round))
                 .foregroundColor(.red)
+            // First wall knob
+            Circle()
+                .fill(.orange)
+                .frame(width: 16, height: 16, alignment: .center)
+                .offset(x: pf.wall.from.x - 8, y: pf.wall.from.y - 8)
+                .gesture(DragGesture()
+                    .onChanged { value in
+                        pf.wall.from.x = value.location.x
+                        pf.wall.from.y = value.location.y
+                    })
+            // Second wall knob
+            Circle()
+                .fill(.orange)
+                .frame(width: 16, height: 16, alignment: .center)
+                .offset(x: pf.wall.to.x - 8, y: pf.wall.to.y - 8)
+                .gesture(DragGesture()
+                    .onChanged { value in
+                        pf.wall.to.x = value.location.x
+                        pf.wall.to.y = value.location.y
+                    })
+            // Actual position defined by user input
             Circle()
                 .fill(.green)
                 .frame(width: 10, height: 10, alignment: .center)
@@ -155,8 +232,13 @@ struct PFView: View {
             .gesture(
                 DragGesture(minimumDistance: 0, coordinateSpace: .local)
                     .onChanged { value in
-                        self.approxPos = self.pf.predictPosition(Point(x: value.location.x, y: value.location.y))
-                        self.actualPos = Point(x: value.location.x, y: value.location.y)
+                        if (toggleTimer) {
+                            self.actualPos = Point(x: value.location.x, y: value.location.y)
+                        }
+                        else {
+                            self.approxPos = self.pf.predictPosition(Point(x: value.location.x, y: value.location.y))
+                            self.actualPos = Point(x: value.location.x, y: value.location.y)
+                        }
                     }
               )
     }
