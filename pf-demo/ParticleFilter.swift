@@ -31,7 +31,18 @@ public class ParticleFilter {
     public var defaultPositionStd: Point
     
     /// Interval in seconds at which it performs a random resampling
-    public var randResampleInterval: Double
+    public var randResampleInterval: Double {
+        get {return self._randResampleInterval}
+        set {
+            self._randResampleInterval = newValue
+            self.timer.invalidate()
+            self.timer = Timer.scheduledTimer(withTimeInterval: _randResampleInterval, repeats: true) { _ in
+                self.randomResampling = true
+            }
+        }
+    }
+    private var _randResampleInterval = 1.0
+    private var timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) {_ in }
     
     /// percentage (value between 0 and 1) of particles randomly resampled
     public var randResamplePercentage: Double {
@@ -81,22 +92,6 @@ public class ParticleFilter {
         self.randResampleInterval = randResampleInterval
         self.apprxRadiusPercentage = apprxRadiusPercentage
         self.randResamplePercentage = randResamplePercentage
-        if #available(iOS 10.0, *) {
-            let _ = Timer.scheduledTimer(withTimeInterval: randResampleInterval, repeats: true) { _ in
-                self.randomResampling = true
-            }
-        } else {
-            // Fallback on earlier versions
-            Timer.scheduledTimer(
-                timeInterval: randResampleInterval,
-                target: self,
-                selector: #selector(self.doRandResample),
-                userInfo: nil, repeats: true)
-        }
-    }
-    
-    @objc private func doRandResample() {
-        self.randomResampling = true
     }
     
     public func predictPosition(_ arPosition: Point) -> ApproximatedPosition {

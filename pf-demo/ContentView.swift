@@ -43,7 +43,7 @@ struct ContentView: View {
         return HStack {
             FormView(pf: $pf, actualPos: $actualPos, approxPos: $approxPos, toggleTimer: $toggleTimer)
             PFView(pf: $pf, approxPos: $approxPos, actualPos: $actualPos, toggleTimer: $toggleTimer)
-        }
+        }.preferredColorScheme(.dark)
     }
 }
 
@@ -57,7 +57,7 @@ struct FormView: View {
     @State var numParticles = initialNumParticles
     @State var maxParticleVel = initialMaxParticleVel
     @State var defaultPosStd = initialDefaultPosStd
-    @State var randResPercentage = initialRandResPercentage
+    @State var randResPercentage = initialRandResPercentage * 100
     @State var randResInterval = initialRandResInterval
     @State var apprxRadiusPercentage = initialApprxRadiusPercentage
     @State var timerInterval = initialTimerInterval
@@ -84,18 +84,21 @@ struct FormView: View {
             Group {
                 Text("Timer interval:")
                     .font(Font.title2)
-                TextField("", value: $timerInterval, formatter: floatFormatter)
-                    .keyboardType(.numberPad)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .font(Font.title2)
-                    .padding(.leading, 10)
-                    .onSubmit {
-                        self.timer.invalidate()
-                        self.timer = Timer.scheduledTimer(withTimeInterval: timerInterval, repeats: true) { _ in
-                            updateParticleFilter()
+                HStack {
+                    TextField("", value: $timerInterval, formatter: floatFormatter)
+                        .keyboardType(.numberPad)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .font(Font.title2)
+                        .padding(.leading, 10)
+                        .onSubmit {
+                            self.timer.invalidate()
+                            self.timer = Timer.scheduledTimer(withTimeInterval: timerInterval, repeats: true) { _ in
+                                updateParticleFilter()
+                            }
+                            self.timer.fire()
                         }
-                        self.timer.fire()
-                    }
+                    Text("s").font(Font.title2)
+                }
             }
             Group {
                 Text("Number of particles:")
@@ -124,26 +127,33 @@ struct FormView: View {
             Group {
                 Text("Random resample interval:")
                     .font(Font.title2)
-                TextField("", value: $randResInterval, formatter: floatFormatter)
-                    .keyboardType(.numberPad)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .font(Font.title2)
-                    .padding(.leading, 10)
-                    .onSubmit {
-                        self.pf.randResampleInterval = self.randResInterval
-                    }
+                HStack {
+                    TextField("", value: $randResInterval, formatter: floatFormatter)
+                        .keyboardType(.numberPad)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .font(Font.title2)
+                        .padding(.leading, 10)
+                        .onSubmit {
+                            self.pf.randResampleInterval = self.randResInterval
+                            print(self.pf.randResampleInterval)
+                        }
+                    Text("s").font(Font.title2)
+                }
             }
             Group {
                 Text("Random resample percentage:")
                     .font(Font.title2)
-                TextField("", value: $randResPercentage, formatter: floatFormatter)
-                    .keyboardType(.numberPad)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .font(Font.title2)
-                    .padding(.leading, 10)
-                    .onSubmit {
-                        self.pf.randResamplePercentage = self.randResPercentage
-                    }
+                HStack {
+                    TextField("", value: $randResPercentage, formatter: floatFormatter)
+                        .keyboardType(.numberPad)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .font(Font.title2)
+                        .padding(.leading, 10)
+                        .onSubmit {
+                            self.pf.randResamplePercentage = (self.randResPercentage / 100)
+                        }
+                    Text("%").font(Font.title2)
+                }
             }
             Toggle(isOn: $toggleTimer) {
                 Text("Toggle Timer").font(Font.title2)
