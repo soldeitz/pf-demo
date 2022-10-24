@@ -43,7 +43,7 @@ struct ContentView: View {
         return HStack {
             FormView(pf: $pf, actualPos: $actualPos, approxPos: $approxPos, toggleTimer: $toggleTimer)
             PFView(pf: $pf, approxPos: $approxPos, actualPos: $actualPos, toggleTimer: $toggleTimer)
-        }.preferredColorScheme(.dark)
+        }.preferredColorScheme(.dark).edgesIgnoringSafeArea(.all)
     }
 }
 
