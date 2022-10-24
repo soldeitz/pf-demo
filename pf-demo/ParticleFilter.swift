@@ -44,39 +44,39 @@ public class ParticleFilter {
     private var _randResampleInterval = 1.0
     private var timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) {_ in }
     
-    /// percentage (value between 0 and 1) of particles randomly resampled
+    /// percentage (value between 0 and 100) of particles randomly resampled
     public var randResamplePercentage: Double {
         get {return self._randResamplePercentage}
         set {
-            if newValue >= 0.0 && newValue <= 1.0 {
+            if newValue >= 0.0 && newValue <= 100.0 {
                 self._randResamplePercentage = newValue
             }
-            else if newValue > 1.0 {
-                self._randResamplePercentage = 1.0
+            else if newValue > 100.0 {
+                self._randResamplePercentage = 100.0
             }
             else {
                 self._randResamplePercentage = 0.0
             }
         }
     }
-    private var _randResamplePercentage = 0.9
+    private var _randResamplePercentage = 10.0
     
-    /// Percentage (value between 0 and 1) of the longest distance to the center of gravity. It defines the size of the approximationRadius
+    /// Percentage (value between 0 and 100) of the longest distance to the center of gravity. It defines the size of the approximationRadius
     public var apprxRadiusPercentage: Double {
         get {return self._apprxRadiusPercentage}
         set {
-            if newValue >= 0.0 && newValue <= 1.0 {
+            if newValue >= 0.0 && newValue <= 100.0 {
                 self._apprxRadiusPercentage = newValue
             }
-            else if newValue > 1.0 {
-                self._apprxRadiusPercentage = 1.0
+            else if newValue > 100.0 {
+                self._apprxRadiusPercentage = 100.0
             }
             else {
                 self._apprxRadiusPercentage = 0.0
             }
         }
     }
-    private var _apprxRadiusPercentage = 0.9
+    private var _apprxRadiusPercentage = 90.0
     
     public var isInitialized = false
     
@@ -204,7 +204,7 @@ public class ParticleFilter {
         // It also resamples randomly a percentage (randResamplePercentage) of the
         // particles every randResampleInterval seconds
         if self.randomResampling {
-            let partialNumPart = Int(floor((1 - randResamplePercentage)*Double(particlesCopy.count)))
+            let partialNumPart = Int(floor((1 - randResamplePercentage/100)*Double(particlesCopy.count)))
             let arPosStd = self.defaultPositionStd
             for i in 0..<partialNumPart {
                 var p = particlesCopy[weightsDist.draw()]
@@ -236,7 +236,7 @@ public class ParticleFilter {
         let distances = self.particles.map{distance($0.p, centerOfGravity)}
         let sortedDistances = distances.sorted(by: {$0<$1})
         
-        let idx = Int(floor(apprxRadiusPercentage*Double(self.particles.count - 1))) // TODO estrarre parametro
+        let idx = Int(floor((apprxRadiusPercentage/100.0)*Double(self.particles.count - 1)))
         let radius = sortedDistances[idx]
 
         return ApproximatedPosition(position: centerOfGravity, approximationRadius: radius)

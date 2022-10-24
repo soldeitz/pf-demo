@@ -18,9 +18,9 @@ let initialWall = Wall(from: Point(x: (WIDTH / 3)*2, y: HEIGHT / 4), to: Point(x
 let initialNumParticles = 300
 let initialMaxParticleVel = 200.0
 let initialDefaultPosStd = Point(x: 30, y: 30)
-let initialRandResPercentage = 0.01
+let initialRandResPercentage = 10.0
 let initialRandResInterval = 1.0
-let initialApprxRadiusPercentage = 0.9
+let initialApprxRadiusPercentage = 90.0
 let initialTimerInterval = 0.1
 
 let initialApproxPos = ApproximatedPosition(position: Point(x: WIDTH / 3, y: HEIGHT / 2), approximationRadius: 20)
@@ -57,7 +57,7 @@ struct FormView: View {
     @State var numParticles = initialNumParticles
     @State var maxParticleVel = initialMaxParticleVel
     @State var defaultPosStd = initialDefaultPosStd
-    @State var randResPercentage = initialRandResPercentage * 100
+    @State var randResPercentage = initialRandResPercentage
     @State var randResInterval = initialRandResInterval
     @State var apprxRadiusPercentage = initialApprxRadiusPercentage
     @State var timerInterval = initialTimerInterval
@@ -135,7 +135,6 @@ struct FormView: View {
                         .padding(.leading, 10)
                         .onSubmit {
                             self.pf.randResampleInterval = self.randResInterval
-                            print(self.pf.randResampleInterval)
                         }
                     Text("s").font(Font.title2)
                 }
@@ -150,7 +149,7 @@ struct FormView: View {
                         .font(Font.title2)
                         .padding(.leading, 10)
                         .onSubmit {
-                            self.pf.randResamplePercentage = (self.randResPercentage / 100)
+                            self.pf.randResamplePercentage = self.randResPercentage
                         }
                     Text("%").font(Font.title2)
                 }
