@@ -18,7 +18,7 @@ let initialWall = Wall(from: Point(x: (WIDTH / 3)*2, y: HEIGHT / 4), to: Point(x
 let initialNumParticles = 300
 let initialMaxParticleVel = 200.0
 let initialDefaultPosStd = Point(x: 30, y: 30)
-let initialRandResPercentage = 10.0
+let initialRandResPercentage = 1.0
 let initialRandResInterval = 1.0
 let initialApprxRadiusPercentage = 90.0
 let initialTimerInterval = 0.1
@@ -43,7 +43,7 @@ struct ContentView: View {
         return HStack {
             FormView(pf: $pf, actualPos: $actualPos, approxPos: $approxPos, toggleTimer: $toggleTimer)
             PFView(pf: $pf, approxPos: $approxPos, actualPos: $actualPos, toggleTimer: $toggleTimer)
-        }.preferredColorScheme(.dark).edgesIgnoringSafeArea(.all)
+        }.preferredColorScheme(.dark).edgesIgnoringSafeArea(.all).statusBar(hidden: true)
     }
 }
 
@@ -178,6 +178,11 @@ struct FormView: View {
     }
 }
 
+let BLUE = Color(red: 0.0078, green: 0.5176, blue: 1.0)
+let GREEN = Color(red: 0.0706, green: 0.9020, blue: 0.5686)
+let RED = Color(red: 0.9960, green: 0.0, blue: 0.2276)
+let ORANGE = Color(red: 1.0, green: 0.7686, blue: 0.2392)
+
 struct PFView: View {
     @Binding var pf: ParticleFilter
     @Binding var approxPos: ApproximatedPosition
@@ -195,12 +200,12 @@ struct PFView: View {
             }
             // Particle representing the calculated approximate position
             Circle()
-                .fill(.blue)
+                .fill(BLUE)
                 .frame(width: 10, height: 10, alignment: .center)
                 .offset(x: approxPos.position.x - 5, y: approxPos.position.y - 5)
             // Approximation radius
             Circle()
-                .stroke(.blue)
+                .stroke(BLUE)
                 .frame(width: approxPos.approximationRadius * 2, height: approxPos.approximationRadius * 2, alignment: .topLeading)
                 .offset(x: (approxPos.position.x - approxPos.approximationRadius), y: (approxPos.position.y - approxPos.approximationRadius))
             // Wall
@@ -209,10 +214,10 @@ struct PFView: View {
                 path.addLine(to: CGPoint(x: pf.wall.to.x, y: pf.wall.to.y))
             }
                 .strokedPath(StrokeStyle(lineWidth: 5, lineCap: .square, lineJoin: .round))
-                .foregroundColor(.red)
+                .foregroundColor(RED)
             // First wall knob
             Circle()
-                .fill(.orange)
+                .fill(ORANGE)
                 .frame(width: 16, height: 16, alignment: .center)
                 .offset(x: pf.wall.from.x - 8, y: pf.wall.from.y - 8)
                 .gesture(DragGesture()
@@ -222,7 +227,7 @@ struct PFView: View {
                     })
             // Second wall knob
             Circle()
-                .fill(.orange)
+                .fill(ORANGE)
                 .frame(width: 16, height: 16, alignment: .center)
                 .offset(x: pf.wall.to.x - 8, y: pf.wall.to.y - 8)
                 .gesture(DragGesture()
@@ -232,12 +237,12 @@ struct PFView: View {
                     })
             // Actual position defined by user input
             Circle()
-                .fill(.green)
+                .fill(GREEN)
                 .frame(width: 10, height: 10, alignment: .center)
                 .offset(x: actualPos.x - 5, y: actualPos.y - 5)
         }
             .frame(width: WIDTH, height: HEIGHT)
-            .clipped().contentShape(Rectangle()).border(.blue).padding()
+            .clipped().contentShape(Rectangle()).border(BLUE).padding()
             .gesture(
                 DragGesture(minimumDistance: 0, coordinateSpace: .local)
                     .onChanged { value in
