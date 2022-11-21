@@ -193,11 +193,11 @@ struct PFView: View {
     var body: some View {
         ZStack(alignment: .topLeading) {
             // Particles of the PF
-            ForEach(pf.particles, id: \.id) { particle in
-                Circle()
-                    .frame(width: 4, height: 4, alignment: .center)
-                    .offset(x: particle.p.x, y: particle.p.y)
-            }
+//            ForEach(pf.particles, id: \.id) { particle in
+//                Circle()
+//                    .frame(width: 4, height: 4, alignment: .center)
+//                    .offset(x: particle.p.x, y: particle.p.y)
+//            }
             // Particle representing the calculated approximate position
             Circle()
                 .fill(BLUE)

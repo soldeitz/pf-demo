@@ -142,7 +142,7 @@ public class ParticleFilter {
      * chooses an angle randomly with uniform distribution on [0, 360]
      * chooses a velocity randomly with uniform ditribution on [0, maxParticleVelocity]
      * moves the particle in that direction
-     * if displacement segment intercepts the wall, particle stops where the two segments intersect
+     * if displacement segment intercepts the wall, particle does not move
      */
     private func transitionModel(deltaT dt: Double) {
         for idx in 0..<self.numParticles {
@@ -152,23 +152,8 @@ public class ParticleFilter {
             let newXPos = oldPos.x + velocity * dt * cos(angle)
             let newYPos = oldPos.y + velocity * dt * sin(angle)
             let newPos = Point(x: newXPos, y: newYPos)
-            var int: Point?
-            if getIntersection(newPos, oldPos, self.wall.from, self.wall.to, intersection: &int) {
-                // The intersection is not exactly on the wall but a little bit behind. I choose
-                // 90% of the distance between the old position and the intersection on the wall.
-                // Segment parametrization taken from:
-                // https://math.stackexchange.com/questions/134112/find-a-point-on-a-line-segment-located-at-a-distance-d-from-one-endpoint#134135
-//                let d = 0.9*distance(oldPos, int!)
-//                let denominator = sqrt((oldPos.x - int!.x)*(oldPos.x - int!.x) + (oldPos.y - int!.y)*(oldPos.y - int!.y))
-//                if denominator == 0 {
-//                    self.particles[idx].p = int!
-//                    print("zero den")
-//                }
-//                else {
-//                    let quasiIntX = oldPos.x + (d*(int!.x - oldPos.x) / denominator)
-//                    let quasiIntY = oldPos.y + (d*(int!.y - oldPos.y) / denominator)
-//                    self.particles[idx].p = Point(x: quasiIntX, y: quasiIntY)
-//                }
+            let int = getIntersection(newPos, oldPos, self.wall.from, self.wall.to)
+            if int != nil {
                 self.particles[idx].p = oldPos
             }
             else {
@@ -234,10 +219,13 @@ public class ParticleFilter {
         let centerOfGravity = Point(x: cogX, y: cogY)
         
         let distances = self.particles.map{distance($0.p, centerOfGravity)}
-        let sortedDistances = distances.sorted(by: {$0<$1})
         
-        let idx = Int(floor((apprxRadiusPercentage/100.0)*Double(self.particles.count - 1)))
-        let radius = sortedDistances[idx]
+        let maxDist = distances.max()
+        let radius = (apprxRadiusPercentage/100.0) * maxDist!
+        
+//        let sortedDistances = distances.sorted(by: {$0<$1})
+//        let idx = Int(floor((apprxRadiusPercentage/100.0)*Double(self.particles.count - 1)))
+//        let radius = sortedDistances[idx]
 
         return ApproximatedPosition(position: centerOfGravity, approximationRadius: radius)
     }
@@ -287,22 +275,38 @@ class DiscreteDistribution {
     
     init(weights w: [Double]) {
         let sum = w.reduce(0) {$0+$1}
-        let probDist = w.map {$0 / sum}
+        let probDist = w.map {$0 / sum} // it is the weights vector normalized
         self.cumsum = (probDist.reduce(into: [0.0]) { $0.append($0.last! + $1) }).dropLast(1)
     }
     
+//    func draw() -> Int {
+//        let r = Double.random(in: 0..<1)
+//        var idx = 0
+//        while (idx < self.cumsum.count && self.cumsum[idx] < r) {
+//            idx += 1
+//        }
+//        return idx - 1
+//    }
+    
     func draw() -> Int {
         let r = Double.random(in: 0..<1)
-        var idx = 0
-        for i in 0..<self.cumsum.count {
-            if r > self.cumsum[i] {
-                idx = i
-            }
-            else {
-                break
-            }
+        if (r >= self.cumsum[self.cumsum.count-1]) {
+            return self.cumsum.count - 1
         }
-        return idx
+        return drawRecursive(r: r, start: 0, end: self.cumsum.count-1)
+    }
+
+    private func drawRecursive(r: Double, start: Int, end: Int) -> Int {
+        if (r >= self.cumsum[start] && r < self.cumsum[start + 1]) {
+            return start
+        }
+        let middle = Int((start + end) / 2)
+        if (r <= self.cumsum[middle]) {
+            return drawRecursive(r: r, start: start, end: middle)
+        }
+        else {
+            return drawRecursive(r: r, start: middle, end: end)
+        }
     }
 }
 
@@ -312,8 +316,7 @@ class DiscreteDistribution {
  * Readapted for swift from:
  * https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect/#1968345
  */
-// TODO: far ritornare punto se intersezione, nil altrimenti
-func getIntersection(_ p0: Point,_ p1: Point,_ p2: Point,_ p3: Point,intersection i: inout Point?) -> Bool {
+func getIntersection(_ p0: Point,_ p1: Point,_ p2: Point,_ p3: Point) -> Point? {
     let s1 = Point(x: (p1.x - p0.x), y: (p1.y - p0.y))
     let s2 = Point(x: (p3.x - p2.x), y: (p3.y - p2.y))
     
@@ -321,10 +324,11 @@ func getIntersection(_ p0: Point,_ p1: Point,_ p2: Point,_ p3: Point,intersectio
     let t = ( s2.x * (p0.y - p2.y) - s2.y * (p0.x - p2.x)) / (-s2.x * s1.y + s1.x * s2.y)
     
     if (s >= 0 && s <= 1 && t >= 0 && t <= 1) {
-        i = Point(x: p0.x + (t * s1.x), y: p0.y + (t * s1.y))
-        return true
+        return Point(x: p0.x + (t * s1.x), y: p0.y + (t * s1.y))
     }
-    return false
+    else {
+        return nil
+    }
 }
 
 func distance(_ p1: Point,_ p2: Point) -> Double {
