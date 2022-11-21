@@ -26,6 +26,11 @@ let initialTimerInterval = 0.1
 let initialApproxPos = ApproximatedPosition(position: Point(x: WIDTH / 3, y: HEIGHT / 2), approximationRadius: 20)
 let initialActualPos = Point(x: WIDTH / 3, y: HEIGHT / 2)
 
+let BLUE = Color(red: 0.0078, green: 0.5176, blue: 1.0)
+let GREEN = Color(red: 0.0706, green: 0.9020, blue: 0.5686)
+let RED = Color(red: 0.9960, green: 0.0, blue: 0.2276)
+let ORANGE = Color(red: 1.0, green: 0.7686, blue: 0.2392)
+
 struct ContentView: View {
     @State var pf = ParticleFilter(
         numParticles: initialNumParticles,
@@ -82,25 +87,6 @@ struct FormView: View {
     var body: some View {
         return VStack {
             Group {
-                Text("Timer interval:")
-                    .font(Font.title2)
-                HStack {
-                    TextField("", value: $timerInterval, formatter: floatFormatter)
-                        .keyboardType(.numberPad)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .font(Font.title2)
-                        .padding(.leading, 10)
-                        .onSubmit {
-                            self.timer.invalidate()
-                            self.timer = Timer.scheduledTimer(withTimeInterval: timerInterval, repeats: true) { _ in
-                                updateParticleFilter()
-                            }
-                            self.timer.fire()
-                        }
-                    Text("s").font(Font.title2)
-                }
-            }
-            Group {
                 Text("Number of particles:")
                     .font(Font.title2)
                 TextField("", value: $numParticles, formatter: NumberFormatter())
@@ -154,6 +140,25 @@ struct FormView: View {
                     Text("%").font(Font.title2)
                 }
             }
+            Group {
+                Text("Timer interval:")
+                    .font(Font.title2)
+                HStack {
+                    TextField("", value: $timerInterval, formatter: floatFormatter)
+                        .keyboardType(.numberPad)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .font(Font.title2)
+                        .padding(.leading, 10)
+                        .onSubmit {
+                            self.timer.invalidate()
+                            self.timer = Timer.scheduledTimer(withTimeInterval: timerInterval, repeats: true) { _ in
+                                updateParticleFilter()
+                            }
+                            self.timer.fire()
+                        }
+                    Text("s").font(Font.title2)
+                }
+            }
             Toggle(isOn: $toggleTimer) {
                 Text("Toggle Timer").font(Font.title2)
             }
@@ -177,11 +182,6 @@ struct FormView: View {
         }
     }
 }
-
-let BLUE = Color(red: 0.0078, green: 0.5176, blue: 1.0)
-let GREEN = Color(red: 0.0706, green: 0.9020, blue: 0.5686)
-let RED = Color(red: 0.9960, green: 0.0, blue: 0.2276)
-let ORANGE = Color(red: 1.0, green: 0.7686, blue: 0.2392)
 
 struct PFView: View {
     @Binding var pf: ParticleFilter

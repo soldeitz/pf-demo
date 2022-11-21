@@ -7,7 +7,7 @@
 import Foundation
 
 public class ParticleFilter {
-    /// Time istant of the last prediction
+    /// Time instant of the last prediction
     public var lastPredictionTime = -1.0
     
     /// Number of particles to draw
