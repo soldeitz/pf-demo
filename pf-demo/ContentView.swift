@@ -43,11 +43,12 @@ struct ContentView: View {
     @State var approxPos = initialApproxPos
     @State var actualPos = initialActualPos
     @State var toggleTimer = true
+    @State var showParticles = true
     
     var body: some View {
         return HStack {
-            FormView(pf: $pf, actualPos: $actualPos, approxPos: $approxPos, toggleTimer: $toggleTimer)
-            PFView(pf: $pf, approxPos: $approxPos, actualPos: $actualPos, toggleTimer: $toggleTimer)
+            FormView(pf: $pf, actualPos: $actualPos, approxPos: $approxPos, toggleTimer: $toggleTimer, showParticles: $showParticles)
+            PFView(pf: $pf, approxPos: $approxPos, actualPos: $actualPos, showParticles: $showParticles, toggleTimer: $toggleTimer)
         }.preferredColorScheme(.dark).edgesIgnoringSafeArea(.all).statusBar(hidden: true)
     }
 }
@@ -58,6 +59,7 @@ struct FormView: View {
     @Binding var approxPos: ApproximatedPosition
     @Binding var actualPos: Point
     @Binding var toggleTimer: Bool
+    @Binding var showParticles: Bool
     
     @State var numParticles = initialNumParticles
     @State var maxParticleVel = initialMaxParticleVel
@@ -71,11 +73,12 @@ struct FormView: View {
 
     let floatFormatter = NumberFormatter()
     
-    init(pf: Binding<ParticleFilter>, actualPos: Binding<Point>, approxPos: Binding<ApproximatedPosition>, toggleTimer: Binding<Bool>) {
+    init(pf: Binding<ParticleFilter>, actualPos: Binding<Point>, approxPos: Binding<ApproximatedPosition>, toggleTimer: Binding<Bool>, showParticles: Binding<Bool>) {
         self._pf = pf
         self._actualPos = actualPos
         self._approxPos = approxPos
         self._toggleTimer = toggleTimer
+        self._showParticles = showParticles
         
         floatFormatter.usesSignificantDigits = true
     }
@@ -86,6 +89,9 @@ struct FormView: View {
     
     var body: some View {
         return VStack {
+            Toggle(isOn: $showParticles) {
+                Text("Show Particles").font(Font.title2)
+            }.padding()
             Group {
                 Text("Number of particles:")
                     .font(Font.title2)
@@ -187,17 +193,20 @@ struct PFView: View {
     @Binding var pf: ParticleFilter
     @Binding var approxPos: ApproximatedPosition
     @Binding var actualPos: Point
+    @Binding var showParticles: Bool
     
     @Binding var toggleTimer: Bool
 
     var body: some View {
         ZStack(alignment: .topLeading) {
             // Particles of the PF
-//            ForEach(pf.particles, id: \.id) { particle in
-//                Circle()
-//                    .frame(width: 4, height: 4, alignment: .center)
-//                    .offset(x: particle.p.x, y: particle.p.y)
-//            }
+            if (showParticles) {
+                ForEach(pf.particles, id: \.id) { particle in
+                    Circle()
+                        .frame(width: 4, height: 4, alignment: .center)
+                        .offset(x: particle.p.x, y: particle.p.y)
+                }
+            }
             // Particle representing the calculated approximate position
             Circle()
                 .fill(BLUE)
