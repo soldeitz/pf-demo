@@ -1,3 +1,3 @@
 # pf-demo
 
-iPad app to showcase the working of a particle filter library
+An iPad application designed to demonstrate the functionality of a [particle filter library](https://github.com/micheleAndreata/ParticleFilter/tree/main).
